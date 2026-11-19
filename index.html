@@ -200,25 +200,6 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance}
 .qtd button:disabled{opacity:.3;cursor:not-allowed}
 .quieto .item{animation:none}
 .quieto .item.dq{animation:orbita 6s linear infinite}
-/* Simulação de estoque (protótipo) */
-.sim-btn{position:fixed;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:6;min-height:40px;padding:0 14px;border-radius:999px;border:1px dashed var(--ouro);background:rgba(8,7,6,.92);color:var(--ouro);font-family:var(--display);font-weight:600;font-size:13.5px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.6)}
-.sim{position:fixed;left:0;right:0;bottom:0;z-index:20;max-height:52dvh;display:grid;grid-template-rows:auto 1fr;background:var(--carvao);border-top:1px dashed var(--ouro);border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,.75)}
-.sim-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--linha)}
-.sim-topo h2{margin:0;font-size:16px;font-weight:600}
-.sim-topo small{display:block;font-family:var(--corpo);font-weight:400;font-size:12.5px;color:var(--suave)}
-.sim-corpo{overflow-y:auto;padding:10px 16px calc(16px + env(safe-area-inset-bottom,0px));max-width:720px;width:100%;margin:0 auto}
-.sim-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-.sim-acoes button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--dourado);background:var(--preto);font-family:var(--display);font-weight:600;font-size:13.5px;cursor:pointer}
-.sim-acoes button[aria-pressed="true"]{background:var(--grad-ouro);color:#1a1300;border-color:transparent}
-.sim h3{margin:14px 0 4px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dourado-claro)}
-.sim-l{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--linha);font-size:14px}
-.sim-l small{display:block;color:var(--suave);font-size:12px}
-.sim-l.zero > span:first-child{opacity:.55}
-.sim-l.zero small::after{content:" · fora do site";color:var(--ouro)}
-.sim-q{display:inline-flex;align-items:center;border:1px solid var(--linha);border-radius:999px;overflow:hidden}
-.sim-q button{width:38px;height:38px;border:0;background:var(--preto);color:var(--ouro);font-size:18px;font-weight:700;cursor:pointer}
-.sim-q b{min-width:34px;text-align:center;font-variant-numeric:tabular-nums}
-.toast{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:30;max-width:calc(100% - 32px);padding:10px 16px;border-radius:999px;border:1px solid var(--dourado);background:rgba(8,7,6,.95);color:var(--texto);font-size:13.5px;font-weight:600;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.7);animation:sobe .3s ease}
 .vazio{grid-column:1/-1;padding:40px 0;text-align:center;color:var(--suave)}
 
 /* ===== Blocos ===== */
@@ -379,7 +360,7 @@ dialog::backdrop{background:rgba(0,0,0,.75);backdrop-filter:blur(3px)}
       <svg class="ico"><use href="#i-busca"/></svg>
       <input id="busca" type="search" placeholder="Procurar bebida, essência, carvão…" aria-label="Procurar produtos" autocomplete="off">
     </div>
-    <p class="exemplo" id="exemplo">Protótipo: produtos, preços e estoque são simulados. Só aparece o que tem estoque.</p>
+    <p class="exemplo" id="exemplo">Preços e disponibilidade são confirmados pelo WhatsApp ao finalizar o pedido.</p>
 
     <div class="roleta-caixa" id="roleta-caixa"><div class="roleta" id="roleta" role="tablist" aria-label="Categorias"></div></div>
 
@@ -434,23 +415,6 @@ dialog::backdrop{background:rgba(0,0,0,.75);backdrop-filter:blur(3px)}
   </button>
 </div>
 
-<button type="button" class="sim-btn" id="sim-abrir">Protótipo · Simular estoque</button>
-<div class="sim" id="sim" hidden role="region" aria-label="Simulação de estoque">
-  <div class="sim-topo">
-    <h2>Simulação de estoque<small>Você faz o papel do sistema. O site acima reage na hora.</small></h2>
-    <button type="button" class="fechar" id="sim-fechar" aria-label="Fechar simulação">×</button>
-  </div>
-  <div class="sim-corpo">
-    <div class="sim-acoes">
-      <button type="button" id="sim-venda">Vender 1 item na loja</button>
-      <button type="button" id="sim-auto" aria-pressed="false">Vendas automáticas</button>
-      <button type="button" id="sim-repor">Repor tudo</button>
-    </div>
-    <div id="sim-lista"></div>
-  </div>
-</div>
-<div class="toast" id="toast" role="status" hidden></div>
-
 <dialog id="pedido" aria-labelledby="ped-tit">
   <div class="ped-topo">
     <h2 id="ped-tit">Seu pedido</h2>
@@ -495,7 +459,7 @@ const LOJA = {
   endereco: "Endereço a confirmar",
   horario: "Horário a confirmar",
   entrega: "Entrega e retirada",
-  exemplo: true                       // mude para false quando os produtos forem os reais
+  exemplo: true                       // aviso de confirmação de preços na carta (false esconde)
 };
 
 /* ====== CARTA — edite aqui. d: true coloca o produto em Destaques ====== */
@@ -575,13 +539,10 @@ const PRODUTOS = {};
 CARDAPIO.forEach(c => c.itens.forEach((it,i) => { it.id = c.id + "-" + i; it.ic = it.ic || c.id; it.cat = c.nome; PRODUTOS[it.id] = it; }));
 const SECOES = [{ id:"destaques", nome:"Destaques", sub:"Os mais pedidos da casa.", itens: Object.values(PRODUTOS).filter(p => p.d) }, ...CARDAPIO];
 
-// Estoque simulado: no site real, estes números vêm do sistema de estoque
-const ESTOQUE0 = {};
-Object.values(PRODUTOS).forEach((p,i) => { ESTOQUE0[p.id] = [12,0,3,8,24,2,15,6][(i * 5 + 3) % 8]; });
-let estoque = null;
-try { estoque = JSON.parse(guarda.ler("royal-estoque-sim") || "null"); } catch(e) {}
-if (!estoque || typeof estoque !== "object") estoque = Object.assign({}, ESTOQUE0);
-const tem = id => Math.max(0, Number(estoque[id]) || 0);
+// Estoque: enquanto o site não estiver ligado a um sistema de estoque, todos os produtos ficam disponíveis.
+// Para esconder um produto esgotado, coloque 0 no lugar dele aqui, ex.: const ESTOQUE = { "cervejas-2": 0 };
+const ESTOQUE = {};
+const tem = id => (id in ESTOQUE) ? Math.max(0, Number(ESTOQUE[id]) || 0) : 99;
 
 let carrinho = {};
 try { carrinho = JSON.parse(guarda.ler("royal-pedido") || "{}") || {}; } catch(e) {}
@@ -741,37 +702,6 @@ $("fechar").addEventListener("click", () => dlg.close ? dlg.close() : dlg.remove
 dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
 
 desenhar(); resumo(); girar();
-
-/* ====== Simulação de estoque (protótipo) ====== */
-let toastFim = 0, autoId = 0;
-function avisar(txt){ const t = $("toast"); t.textContent = txt; t.hidden = true; void t.offsetWidth; t.hidden = false; clearTimeout(toastFim); toastFim = setTimeout(() => t.hidden = true, 2600); }
-function linhaSim(id){ const l = document.querySelector('[data-sl="' + id + '"]'); if (l) { l.classList.toggle("zero", !tem(id)); l.querySelector("b").textContent = tem(id); } }
-function porEstoque(id, v){
-  v = Math.max(0, Math.min(99, v));
-  const antes = tem(id); if (v === antes) return;
-  estoque[id] = v; guarda.por("royal-estoque-sim", JSON.stringify(estoque));
-  if ((carrinho[id] || 0) > v) { if (v) carrinho[id] = v; else delete carrinho[id]; guarda.por("royal-pedido", JSON.stringify(carrinho)); }
-  if ((antes > 0) !== (v > 0)) desenhar(true); else atualizaCard(id);
-  resumo(); linhaSim(id);
-}
-function venderUm(){
-  const ids = Object.keys(PRODUTOS).filter(k => tem(k) > 0);
-  if (!ids.length) { avisar("Estoque zerado. Toque em Repor tudo."); return false; }
-  const id = ids[Math.floor(Math.random() * ids.length)]; porEstoque(id, tem(id) - 1);
-  avisar(tem(id) ? "Venda na loja: " + PRODUTOS[id].n + " · restam " + tem(id) : PRODUTOS[id].n + " esgotou e saiu do site");
-  return true;
-}
-function pararAuto(){ clearInterval(autoId); autoId = 0; $("sim-auto").setAttribute("aria-pressed", "false"); }
-$("sim-lista").innerHTML = CARDAPIO.map(c => '<h3>' + c.nome + '</h3>' + c.itens.map(p =>
-  '<div class="sim-l' + (tem(p.id) ? '' : ' zero') + '" data-sl="' + p.id + '"><span>' + p.n + '<small>' + p.t + '</small></span><span class="sim-q"><button type="button" data-e="-1" aria-label="Tirar um do estoque">−</button><b>' +
-  tem(p.id) + '</b><button type="button" data-e="1" aria-label="Colocar um no estoque">+</button></span></div>').join("")).join("");
-$("sim-lista").addEventListener("click", e => { const b = e.target.closest("[data-e]"); if (!b) return; const id = b.closest("[data-sl]").dataset.sl; porEstoque(id, tem(id) + Number(b.dataset.e)); });
-$("sim-abrir").addEventListener("click", () => { $("sim").hidden = false; $("sim-abrir").hidden = true; });
-$("sim-fechar").addEventListener("click", () => { $("sim").hidden = true; $("sim-abrir").hidden = false; });
-$("sim-venda").addEventListener("click", venderUm);
-$("sim-auto").addEventListener("click", () => { if (autoId) { pararAuto(); return; } $("sim-auto").setAttribute("aria-pressed", "true"); venderUm(); autoId = setInterval(() => { if (!venderUm()) pararAuto(); }, 2800); });
-$("sim-repor").addEventListener("click", () => { pararAuto(); Object.keys(PRODUTOS).forEach(k => { estoque[k] = ESTOQUE0[k] || 10; if (!ESTOQUE0[k]) estoque[k] = 10; linhaSim(k); });
-  guarda.por("royal-estoque-sim", JSON.stringify(estoque)); desenhar(true); resumo(); avisar("Estoque reposto"); });
 
 /* ====== Faíscas ====== */
 const fx = $("fx"), fxc = fx.getContext && fx.getContext("2d");
